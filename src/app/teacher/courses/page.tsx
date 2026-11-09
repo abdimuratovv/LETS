@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { requireTeacher } from '@/lib/auth/guards'
 import { AddCourseForm, FinishCourseForm } from './course-forms'
 
@@ -33,7 +34,15 @@ export default async function CoursesPage() {
                     <span className="text-sm text-gray-600">Tugagan</span>
                   )}
                 </span>
-                {c.status === 'active' && <FinishCourseForm courseId={c.id} />}
+                <span className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                  <Link
+                    href={`/teacher/courses/${c.id}`}
+                    className="inline-flex min-h-12 items-center rounded-lg border border-gray-300 px-4 py-2 text-base font-medium"
+                  >
+                    Mavzular va resurslar
+                  </Link>
+                  {c.status === 'active' && <FinishCourseForm courseId={c.id} />}
+                </span>
               </li>
             ))}
           </ul>

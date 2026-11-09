@@ -35,6 +35,8 @@ const messages: Record<string, string> = {
   invalid_body: "Konspekt matni bo'sh bo'lmasin (50 000 belgigacha)",
   invalid_file: 'Bu turdagi fayl ruxsat etilmagan',
   file_too_large: 'Fayl 50 MB dan katta',
+  topic_not_empty: "Mavzuda resurslar bor. Avval ularni o'chiring",
+  course_not_found: 'Kurs topilmadi',
 }
 
 export function errorMessage(code: string): string {

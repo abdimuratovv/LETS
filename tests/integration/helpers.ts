@@ -58,6 +58,8 @@ export async function resetData(): Promise<void> {
   // profiles -> auth.users ON DELETE CASCADE; a'zoliklar profil/guruh bilan birga ketadi.
   check((await db.from('profiles').delete().neq('id', NIL_UUID)).error, 'profiles')
   check((await db.from('groups').delete().neq('id', NIL_UUID)).error, 'groups')
+  check((await db.from('resources').delete().neq('id', NIL_UUID)).error, 'resources')
+  check((await db.from('topics').delete().neq('id', NIL_UUID)).error, 'topics')
   check((await db.from('courses').delete().neq('id', NIL_UUID)).error, 'courses')
   await resetPrivacy()
 }
@@ -119,6 +121,58 @@ export async function makeTeacher(
     await db.auth.admin.deleteUser(id)
     check(profileError, 'makeTeacher profile')
   }
+  return { id, login, password }
+}
+
+export async function makeCourse(title: string): Promise<{ id: string; title: string }> {
+  const { data: last } = await adminClient()
+    .from('courses')
+    .select('position')
+    .order('position', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  const { data, error } = await adminClient()
+    .from('courses')
+    .insert({ title, position: (last?.position ?? 0) + 1 })
+    .select('id, title')
+    .single()
+  check(error, 'makeCourse')
+  return data!
+}
+
+export type TestStudent = { id: string; login: string; password: string }
+
+/** Faol o'quvchi: auth + profil (onboarding tugagan) + faol guruh a'zoligi. */
+export async function makeStudent(
+  groupId: string,
+  login = 'student',
+  password = 'student123',
+): Promise<TestStudent> {
+  const db = adminClient()
+  const { data, error } = await db.auth.admin.createUser({
+    email: loginToEmail(login),
+    password,
+    email_confirm: true,
+  })
+  check(error, 'makeStudent createUser')
+  const id = data.user!.id
+
+  const { error: profileError } = await db.from('profiles').insert({
+    id,
+    role: 'student',
+    login,
+    full_name: "Test O'quvchi",
+    birth_date: '2010-01-01',
+    onboarding_done: true,
+  })
+  if (profileError) {
+    await db.auth.admin.deleteUser(id)
+    check(profileError, 'makeStudent profile')
+  }
+  const { error: memberError } = await db
+    .from('group_memberships')
+    .insert({ student_id: id, group_id: groupId })
+  check(memberError, 'makeStudent membership')
   return { id, login, password }
 }
 
