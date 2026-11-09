@@ -2,7 +2,9 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { z } from 'zod'
 import { requireTeacher } from '@/lib/auth/guards'
+import { listNameChanges } from '@/modules/profile/service'
 import { ArchiveControl, ResetPasswordForm } from './student-actions'
+import { BirthDateForm, NameLockToggle, RevertButton } from './profile-controls'
 
 export default async function StudentPage({ params }: PageProps<'/teacher/students/[id]'>) {
   const { supabase } = await requireTeacher()
@@ -11,7 +13,7 @@ export default async function StudentPage({ params }: PageProps<'/teacher/studen
 
   const { data: student } = await supabase
     .from('profiles')
-    .select('id, login, full_name, status')
+    .select('id, login, full_name, status, birth_date, name_edit_locked')
     .eq('id', id)
     .eq('role', 'student')
     .maybeSingle()
@@ -27,6 +29,7 @@ export default async function StudentPage({ params }: PageProps<'/teacher/studen
     ? await supabase.from('groups').select('name').eq('id', membership.group_id).maybeSingle()
     : { data: null }
 
+  const changes = await listNameChanges(supabase, id)
   const archived = student.status === 'archived'
 
   return (
@@ -48,6 +51,37 @@ export default async function StudentPage({ params }: PageProps<'/teacher/studen
           <dt className="text-gray-600">Holat</dt>
           <dd>{archived ? 'Arxiv' : 'Faol'}</dd>
         </dl>
+      </section>
+
+      <section className="rounded-2xl bg-white p-4 shadow-sm sm:p-6">
+        <h2 className="mb-4 text-lg font-medium">Ism nazorati</h2>
+        <NameLockToggle key={String(student.name_edit_locked)} studentId={student.id} locked={student.name_edit_locked} />
+        <h3 className="mb-2 mt-6 text-base font-medium">Ism o&apos;zgarishlari tarixi</h3>
+        {changes.length === 0 ? (
+          <p className="text-sm text-gray-600">O&apos;zgarishlar yo&apos;q</p>
+        ) : (
+          <ul className="divide-y divide-gray-200">
+            {changes.map((c) => (
+              <li key={c.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="text-sm">
+                  <p className="text-xs text-gray-600">
+                    {new Date(c.changed_at).toLocaleString('uz-UZ', { timeZone: 'Asia/Tashkent' })} ·{' '}
+                    {c.field === 'full_name' ? 'Ism-familiya' : 'Nickname'}
+                  </p>
+                  <p>
+                    {c.old_value ?? '—'} → <strong>{c.new_value ?? '—'}</strong>
+                  </p>
+                </div>
+                <RevertButton changeId={c.id} studentId={student.id} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="rounded-2xl bg-white p-4 shadow-sm sm:p-6">
+        <h2 className="mb-4 text-lg font-medium">Tug&apos;ilgan kunni o&apos;zgartirish</h2>
+        <BirthDateForm key={student.birth_date ?? ''} studentId={student.id} birthDate={student.birth_date} />
       </section>
 
       <section className="rounded-2xl bg-white p-4 shadow-sm sm:p-6">
