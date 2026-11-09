@@ -1,2 +1,28 @@
 node_modules/
 .superpowers/
+
+# next.js
+/.next/
+/out/
+/build
+next-env.d.ts
+*.tsbuildinfo
+.DS_Store
+*.pem
+npm-debug.log*
+
+# env files
+.env
+.env*.local
+!.env.example
+
+# supabase
+supabase/.temp/
+supabase/.branches/
+
+# tests
+test-results/
+playwright-report/
+/coverage
+
+.vercel
