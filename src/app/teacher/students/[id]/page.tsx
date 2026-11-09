@@ -72,7 +72,9 @@ export default async function StudentPage({ params }: PageProps<'/teacher/studen
                     {c.old_value ?? '—'} → <strong>{c.new_value ?? '—'}</strong>
                   </p>
                 </div>
-                <RevertButton changeId={c.id} studentId={student.id} />
+                {!(c.field === 'full_name' && c.old_value === null) && (
+                  <RevertButton changeId={c.id} studentId={student.id} />
+                )}
               </li>
             ))}
           </ul>

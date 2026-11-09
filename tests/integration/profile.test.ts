@@ -8,6 +8,7 @@ import {
   setNameEditLock,
   updateAvatar,
   updateNames,
+  updateOwnProfile,
 } from '@/modules/profile/service'
 import {
   adminClient,
@@ -164,6 +165,36 @@ describe('profile service', () => {
         ok: false,
         error: 'not_found',
       })
+    })
+  })
+
+  describe('1-ttuzatish', () => {
+    it("ismi bloklangan o'quvchi avatarini o'zgartira oladi (ism yuborilmaydi)", async () => {
+      await completeOnboarding(student, studentId, valid)
+      await setNameEditLock(teacher, studentId, true)
+      expect(await updateOwnProfile(student, studentId, { avatarBase: 'owl' })).toEqual({
+        ok: true,
+        data: null,
+      })
+      const p = await profile()
+      expect(p.avatar_config).toEqual({ base: 'owl' })
+      expect(p.full_name).toBe("O'g'iloy Ne'matova")
+      expect(
+        await updateOwnProfile(student, studentId, {
+          names: { fullName: 'Ali Karimov', nickname: null },
+          avatarBase: 'cat',
+        }),
+      ).toEqual({ ok: false, error: 'name_edit_locked' })
+      expect((await profile()).avatar_config).toEqual({ base: 'owl' })
+    })
+
+    it("onboarding full_name qatorini qaytarib bo'lmaydi (cannot_revert)", async () => {
+      await completeOnboarding(student, studentId, valid)
+      const changes = await listNameChanges(teacher, studentId)
+      const row = changes.filter((c) => c.field === 'full_name').at(-1)!
+      expect(row.old_value).toBeNull()
+      expect(await revertNameChange(teacher, row.id)).toEqual({ ok: false, error: 'cannot_revert' })
+      expect((await profile()).full_name).toBe("O'g'iloy Ne'matova")
     })
   })
 

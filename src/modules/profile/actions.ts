@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { requireTeacher, requireUser } from '@/lib/auth/guards'
 import { errorMessage } from '@/lib/result'
-import { AVATAR_BASES, type AvatarBase } from './avatars'
+import type { AvatarBase } from './avatars'
 import * as service from './service'
 import type { ProfileError } from './service'
 
@@ -83,19 +83,13 @@ export async function updateProfile(
   const { supabase, userId } = await requireUser()
   const values = readValues(formData)
   try {
-    const avatar = values.avatarBase
-    if (avatar && !(AVATAR_BASES as readonly string[]).includes(avatar)) {
-      return failed(values, 'invalid_avatar')
-    }
-    const names = await service.updateNames(supabase, userId, {
-      fullName: values.fullName,
-      nickname: values.nickname,
+    const res = await service.updateOwnProfile(supabase, userId, {
+      names: formData.has('fullName')
+        ? { fullName: values.fullName, nickname: values.nickname }
+        : undefined,
+      avatarBase: values.avatarBase ? (values.avatarBase as AvatarBase) : undefined,
     })
-    if (!names.ok) return failed(values, names.error)
-    if (avatar) {
-      const res = await service.updateAvatar(supabase, userId, avatar as AvatarBase)
-      if (!res.ok) return failed(values, res.error)
-    }
+    if (!res.ok) return failed(values, res.error)
   } catch (e) {
     console.error('[profile]', e)
     return unexpected(values)

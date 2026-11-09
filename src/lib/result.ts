@@ -26,6 +26,7 @@ const messages: Record<string, string> = {
   invalid_nickname: "Nickname 2–20 belgidan iborat bo'lsin: harflar, raqamlar, nuqta, pastki chiziq yoki bo'sh joy",
   invalid_birth_date: "Tug'ilgan kun noto'g'ri (1950-yil 1-yanvardan bugungacha bo'lishi kerak)",
   invalid_avatar: "Avatarni ro'yxatdan tanlang",
+  cannot_revert: "Bu o'zgarishni qaytarib bo'lmaydi (oldingi ism yo'q)",
   name_edit_locked: "Ismni o'zgartirish o'qituvchi tomonidan bloklangan",
   birth_date_locked: "Tug'ilgan kunni faqat o'qituvchi o'zgartira oladi",
 }

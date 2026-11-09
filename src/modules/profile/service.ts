@@ -19,6 +19,7 @@ export type ProfileError =
   | 'name_edit_locked'
   | 'birth_date_locked'
   | 'forbidden'
+  | 'cannot_revert'
   | 'not_found'
 
 type Db = SupabaseClient<Database>
@@ -101,6 +102,29 @@ export async function updateAvatar(
   return updateProfile(db, userId, { avatar_config: { base } })
 }
 
+/** Ism (ixtiyoriy) va avatar (ixtiyoriy) bitta update bilan; qulflangan o'quvchi faqat avatarni yuboradi. */
+export async function updateOwnProfile(
+  db: Db,
+  userId: string,
+  input: { names?: { fullName: string; nickname: string | null }; avatarBase?: AvatarBase },
+): Promise<Result<null, ProfileError>> {
+  const patch: Database['public']['Tables']['profiles']['Update'] = {}
+  if (input.names) {
+    const fullName = fullNameSchema.safeParse(input.names.fullName)
+    if (!fullName.success) return err('invalid_full_name')
+    const nickname = nicknameSchema.safeParse(input.names.nickname ?? '')
+    if (!nickname.success) return err('invalid_nickname')
+    patch.full_name = fullName.data
+    patch.nickname = nickname.data
+  }
+  if (input.avatarBase !== undefined) {
+    if (!(AVATAR_BASES as readonly string[]).includes(input.avatarBase)) return err('invalid_avatar')
+    patch.avatar_config = { base: input.avatarBase }
+  }
+  if (Object.keys(patch).length === 0) return ok(null)
+  return updateProfile(db, userId, patch)
+}
+
 // ===== O'qituvchi funksiyalari (o'qituvchi sessiyasi klienti) =====
 
 export async function revertNameChange(
@@ -115,6 +139,8 @@ export async function revertNameChange(
     .maybeSingle()
   if (error) throw new Error(`tarix o'qilmadi: ${error.message}`)
   if (!change) return err('not_found')
+  // Onboarding qatori (eski qiymat yo'q): ismni bo'sh qoldirib bo'lmaydi.
+  if (change.field === 'full_name' && change.old_value === null) return err('cannot_revert')
 
   if (change.field === 'full_name') {
     return updateProfile(db, change.profile_id, { full_name: change.old_value })
