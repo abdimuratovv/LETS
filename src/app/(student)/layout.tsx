@@ -5,6 +5,7 @@ import { touchLastSeen } from '@/modules/privacy/service'
 
 const LINKS = [
   { href: '/home', label: 'Guruhim' },
+  { href: '/resources', label: 'Resurslar' },
   { href: '/profile', label: 'Profil' },
 ]
 

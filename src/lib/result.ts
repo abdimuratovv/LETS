@@ -30,6 +30,15 @@ const messages: Record<string, string> = {
   name_edit_locked: "Ismni o'zgartirish o'qituvchi tomonidan bloklangan",
   birth_date_locked: "Tug'ilgan kunni faqat o'qituvchi o'zgartira oladi",
   invalid_privacy: "Maxfiylik qiymati noto'g'ri",
+  invalid_title: "Nom 2–120 belgidan iborat bo'lsin",
+  invalid_url: "Havola http:// yoki https:// bilan boshlanishi kerak",
+  invalid_body: "Konspekt matni bo'sh bo'lmasin (50 000 belgigacha)",
+  invalid_file: 'Bu turdagi fayl ruxsat etilmagan',
+  file_too_large: 'Fayl 50 MB dan katta',
+  topic_not_empty: "Mavzuda resurslar bor. Avval ularni o'chiring",
+  course_not_found: 'Kurs topilmadi',
+  topic_not_found: 'Mavzu topilmadi',
+  invalid_group: 'Tanlangan guruh topilmadi',
 }
 
 export function errorMessage(code: string): string {

@@ -177,6 +177,98 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"resource_groups": {
+                  Row: {
+                    "group_id": string,"resource_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "group_id": string,"resource_id": string
+                  }
+                  Update: {
+                    "group_id"?: string,"resource_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "resource_groups_group_id_fkey"
+      columns: ["group_id"]
+isOneToOne: false
+      referencedRelation: "groups"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "resource_groups_resource_id_fkey"
+      columns: ["resource_id"]
+isOneToOne: false
+      referencedRelation: "resources"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"resource_views": {
+                  Row: {
+                    "first_viewed_at": string,"resource_id": string,"student_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "first_viewed_at"?: string,"resource_id": string,"student_id": string
+                  }
+                  Update: {
+                    "first_viewed_at"?: string,"resource_id"?: string,"student_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "resource_views_resource_id_fkey"
+      columns: ["resource_id"]
+isOneToOne: false
+      referencedRelation: "resources"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "resource_views_student_id_fkey"
+      columns: ["student_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"resources": {
+                  Row: {
+                    "body_md": string | null,"created_at": string,"file_name": string | null,"file_size": number | null,"id": string,"position": number,"storage_path": string | null,"title": string,"topic_id": string,"type": Database["public"]['Enums']["resource_type"],"updated_at": string,"url": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "body_md"?: string | null,"created_at"?: string,"file_name"?: string | null,"file_size"?: number | null,"id"?: string,"position"?: number,"storage_path"?: string | null,"title": string,"topic_id": string,"type": Database["public"]['Enums']["resource_type"],"updated_at"?: string,"url"?: string | null
+                  }
+                  Update: {
+                    "body_md"?: string | null,"created_at"?: string,"file_name"?: string | null,"file_size"?: number | null,"id"?: string,"position"?: number,"storage_path"?: string | null,"title"?: string,"topic_id"?: string,"type"?: Database["public"]['Enums']["resource_type"],"updated_at"?: string,"url"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "resources_topic_id_fkey"
+      columns: ["topic_id"]
+isOneToOne: false
+      referencedRelation: "topics"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"topics": {
+                  Row: {
+                    "course_id": string,"created_at": string,"id": string,"position": number,"title": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "course_id": string,"created_at"?: string,"id"?: string,"position"?: number,"title": string
+                  }
+                  Update: {
+                    "course_id"?: string,"created_at"?: string,"id"?: string,"position"?: number,"title"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "topics_course_id_fkey"
+      columns: ["course_id"]
+isOneToOne: false
+      referencedRelation: "courses"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Views: {
@@ -185,6 +277,12 @@ isOneToOne: false
           Functions: {
             "active_group_id":
 { Args: { "uid": string }; Returns: string
+                           },
+"can_access_course":
+{ Args: { "cid": string,"uid": string }; Returns: boolean
+                           },
+"can_access_resource":
+{ Args: { "rid": string,"uid": string }; Returns: boolean
                            },
 "can_view":
 { Args: { "item": Database["public"]['Enums']["privacy_item"],"target": string,"viewer": string }; Returns: boolean
@@ -199,7 +297,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "course_status": "active"|"finished","privacy_item": "avatar"|"online_status"|"stats"|"badges"|"birthday","privacy_scope": "everyone"|"own_group"|"nobody","user_role": "teacher"|"student","user_status": "active"|"archived"
+            "course_status": "active"|"finished","privacy_item": "avatar"|"online_status"|"stats"|"badges"|"birthday","privacy_scope": "everyone"|"own_group"|"nobody","resource_type": "link"|"file"|"note","user_role": "teacher"|"student","user_status": "active"|"archived"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -319,7 +417,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "course_status": ["active", "finished"],"privacy_item": ["avatar", "online_status", "stats", "badges", "birthday"],"privacy_scope": ["everyone", "own_group", "nobody"],"user_role": ["teacher", "student"],"user_status": ["active", "archived"]
+            "course_status": ["active", "finished"],"privacy_item": ["avatar", "online_status", "stats", "badges", "birthday"],"privacy_scope": ["everyone", "own_group", "nobody"],"resource_type": ["link", "file", "note"],"user_role": ["teacher", "student"],"user_status": ["active", "archived"]
           }
         }
 } as const
