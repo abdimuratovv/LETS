@@ -36,6 +36,17 @@ describe('resolveRoute', () => {
     ['student /', '/', student, to('/home')],
     ['yangi student /', '/', newStudent, to('/onboarding')],
     ['/teacherx student', '/teacherx', student, next],
+    ['student /resources', '/resources', student, next],
+    ['teacher /resources', '/resources', teacher, to('/teacher')],
+    ['anonim /resources', '/resources', null, to('/login')],
+    ['student /resources/1', '/resources/1', student, next],
+    ['student /resources/1/open', '/resources/1/open', student, next],
+    // R1: o'qituvchi faqat /resources/<id>/open orqali havola/faylni ocha oladi
+    ['teacher /resources/1/open', '/resources/1/open', teacher, next],
+    ['teacher /resources/1', '/resources/1', teacher, to('/teacher')],
+    ['teacher /resources/1/open/x', '/resources/1/open/x', teacher, to('/teacher')],
+    ['teacher /resources//open', '/resources//open', teacher, to('/teacher')],
+    ['anonim /resources/1/open', '/resources/1/open', null, to('/login')],
   ]
 
   it.each(cases)('%s', (_name, path, user, expected) => {

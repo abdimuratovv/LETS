@@ -37,6 +37,8 @@ const messages: Record<string, string> = {
   file_too_large: 'Fayl 50 MB dan katta',
   topic_not_empty: "Mavzuda resurslar bor. Avval ularni o'chiring",
   course_not_found: 'Kurs topilmadi',
+  topic_not_found: 'Mavzu topilmadi',
+  invalid_group: 'Tanlangan guruh topilmadi',
 }
 
 export function errorMessage(code: string): string {

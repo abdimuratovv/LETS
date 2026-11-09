@@ -41,7 +41,10 @@ function check(error: { message: string } | null, what: string): void {
   if (error) throw new Error(`${what}: ${error.message}`)
 }
 
-/** Barcha auth foydalanuvchilarini (o'qituvchilar ham), guruhlar va kurslarni o'chiradi. */
+/**
+ * Barcha auth foydalanuvchilarini (o'qituvchilar ham), guruhlar, resurslar, mavzular va
+ * kurslarni o'chiradi; `resources` bucket'ini bo'shatadi.
+ */
 export async function resetData(): Promise<void> {
   const db = adminClient()
 
@@ -61,6 +64,7 @@ export async function resetData(): Promise<void> {
   check((await db.from('resources').delete().neq('id', NIL_UUID)).error, 'resources')
   check((await db.from('topics').delete().neq('id', NIL_UUID)).error, 'topics')
   check((await db.from('courses').delete().neq('id', NIL_UUID)).error, 'courses')
+  check((await db.storage.emptyBucket('resources')).error, 'resources bucket')
   await resetPrivacy()
 }
 

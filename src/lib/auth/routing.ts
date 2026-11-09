@@ -15,6 +15,9 @@ function isTeacherArea(path: string): boolean {
   return path === '/teacher' || path.startsWith('/teacher/')
 }
 
+// R1: o'qituvchi kurs sahifasidan havola/faylni shu yo'l orqali ochadi (ko'rish yozilmaydi).
+const RESOURCE_OPEN = /^\/resources\/[^/]+\/open$/
+
 export function resolveRoute(path: string, user: RouteUser | null): RouteDecision {
   if (!user) {
     return path === '/login' ? NEXT : redirect('/login')
@@ -25,7 +28,7 @@ export function resolveRoute(path: string, user: RouteUser | null): RouteDecisio
   }
 
   if (user.role === 'teacher') {
-    if (isTeacherArea(path)) return NEXT
+    if (isTeacherArea(path) || RESOURCE_OPEN.test(path)) return NEXT
     return redirect('/teacher')
   }
 

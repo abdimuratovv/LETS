@@ -2,7 +2,9 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { z } from 'zod'
 import { requireTeacher } from '@/lib/auth/guards'
+import { listResourcesForTopic, listResourceViewStats } from '@/modules/resources/service'
 import { listTopics } from '@/modules/topics/service'
+import { TopicResources } from './resource-section'
 import { AddTopicForm, DeleteTopicForm, MoveTopicForm, RenameTopicForm } from './topic-forms'
 
 export default async function CoursePage({ params }: { params: Promise<{ courseId: string }> }) {
@@ -17,7 +19,23 @@ export default async function CoursePage({ params }: { params: Promise<{ courseI
     .maybeSingle()
   if (!course) notFound()
 
-  const topics = await listTopics(supabase, courseId)
+  const [topics, groupsRes, courseGroupsRes] = await Promise.all([
+    listTopics(supabase, courseId),
+    supabase.from('groups').select('id, name').order('name'),
+    supabase.from('group_courses').select('group_id').eq('course_id', courseId),
+  ])
+  if (groupsRes.error) throw new Error(`guruhlar o'qilmadi: ${groupsRes.error.message}`)
+  if (courseGroupsRes.error) {
+    throw new Error(`kurs guruhlari o'qilmadi: ${courseGroupsRes.error.message}`)
+  }
+  const groupNames = new Map(groupsRes.data.map((g) => [g.id, g.name]))
+  const courseGroupIds = new Set(courseGroupsRes.data.map((g) => g.group_id))
+  const courseGroups = groupsRes.data.filter((g) => courseGroupIds.has(g.id))
+
+  const resourcesByTopic = await Promise.all(
+    topics.map((t) => listResourcesForTopic(supabase, t.id)),
+  )
+  const stats = await listResourceViewStats(supabase, courseId, resourcesByTopic.flat())
 
   return (
     <main className="mx-auto w-full max-w-3xl space-y-6 bg-gray-50 p-4 text-gray-900 sm:p-6">
@@ -58,7 +76,14 @@ export default async function CoursePage({ params }: { params: Promise<{ courseI
               <RenameTopicForm courseId={course.id} topicId={topic.id} title={topic.title} />
               <DeleteTopicForm courseId={course.id} topicId={topic.id} />
             </div>
-            {/* Resurslar bo'limi (4-task) shu yerga qo'shiladi. */}
+            <TopicResources
+              courseId={course.id}
+              topicId={topic.id}
+              resources={resourcesByTopic[i]}
+              stats={stats}
+              groups={courseGroups}
+              groupNames={groupNames}
+            />
           </article>
         ))}
       </section>
