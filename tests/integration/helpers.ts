@@ -59,6 +59,28 @@ export async function resetData(): Promise<void> {
   check((await db.from('profiles').delete().neq('id', NIL_UUID)).error, 'profiles')
   check((await db.from('groups').delete().neq('id', NIL_UUID)).error, 'groups')
   check((await db.from('courses').delete().neq('id', NIL_UUID)).error, 'courses')
+  await resetPrivacy()
+}
+
+/** Maxfiylik sozlamalarini boshlang'ich qiymatlarga qaytaradi va istisnolarni o'chiradi. */
+export async function resetPrivacy(): Promise<void> {
+  const db = adminClient()
+  check(
+    (await db.from('privacy_group_overrides').delete().neq('group_id', NIL_UUID)).error,
+    'privacy_group_overrides',
+  )
+  check(
+    (
+      await db.from('privacy_settings').upsert([
+        { item: 'avatar', scope: 'own_group' },
+        { item: 'online_status', scope: 'own_group' },
+        { item: 'stats', scope: 'own_group' },
+        { item: 'badges', scope: 'everyone' },
+        { item: 'birthday', scope: 'own_group' },
+      ])
+    ).error,
+    'privacy_settings',
+  )
 }
 
 export async function makeGroup(name: string): Promise<{ id: string; name: string }> {

@@ -12,7 +12,7 @@ export default async function ProfilePage() {
   const avatar = profile.avatar_config as { base?: string } | null
 
   return (
-    <main className="mx-auto min-h-dvh w-full max-w-md space-y-6 bg-gray-50 p-4 text-gray-900 sm:p-6">
+    <main className="mx-auto w-full max-w-md space-y-6 bg-gray-50 p-4 text-gray-900 sm:p-6">
       <section className="rounded-2xl bg-white p-4 shadow-sm sm:p-6">
         <div className="mb-5 flex items-center gap-4">
           <Avatar config={profile.avatar_config} size={72} />

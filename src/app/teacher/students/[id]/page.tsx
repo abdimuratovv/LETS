@@ -33,7 +33,7 @@ export default async function StudentPage({ params }: PageProps<'/teacher/studen
   const archived = student.status === 'archived'
 
   return (
-    <main className="mx-auto min-h-dvh w-full max-w-3xl space-y-6 bg-gray-50 p-4 text-gray-900 sm:p-6">
+    <main className="mx-auto w-full max-w-3xl space-y-6 bg-gray-50 p-4 text-gray-900 sm:p-6">
       <Link
         href="/teacher/students"
         className="inline-flex min-h-11 items-center text-sm font-medium text-gray-700 underline"

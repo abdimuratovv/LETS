@@ -29,7 +29,7 @@ export default async function GroupsPage() {
   }
 
   return (
-    <main className="mx-auto min-h-dvh w-full max-w-3xl space-y-6 bg-gray-50 p-4 text-gray-900 sm:p-6">
+    <main className="mx-auto w-full max-w-3xl space-y-6 bg-gray-50 p-4 text-gray-900 sm:p-6">
       <h1 className="text-2xl font-semibold">Guruhlar</h1>
 
       <section className="rounded-2xl bg-white p-4 shadow-sm sm:p-6">

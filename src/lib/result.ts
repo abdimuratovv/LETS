@@ -29,6 +29,7 @@ const messages: Record<string, string> = {
   cannot_revert: "Bu o'zgarishni qaytarib bo'lmaydi (oldingi ism yo'q)",
   name_edit_locked: "Ismni o'zgartirish o'qituvchi tomonidan bloklangan",
   birth_date_locked: "Tug'ilgan kunni faqat o'qituvchi o'zgartira oladi",
+  invalid_privacy: "Maxfiylik qiymati noto'g'ri",
 }
 
 export function errorMessage(code: string): string {
