@@ -18,6 +18,8 @@ const messages: Record<string, string> = {
   login_taken: 'Bu login band',
   group_not_found: 'Guruh topilmadi',
   not_found: "O'quvchi topilmadi",
+  invalid_name: "Nom bo'sh bo'lmasin (60 belgigacha)",
+  forbidden: "Bu amal uchun ruxsat yo'q",
   invalid_login: "Login 3–20 belgidan iborat bo'lsin: kichik lotin harflari, raqamlar, nuqta yoki pastki chiziq",
   invalid_password: "Parol 6–72 belgidan iborat bo'lsin",
   invalid_full_name: "Ism-familiyani to'liq kiriting (kamida 2 so'z, 3–60 belgi, faqat harflar, defis va apostrof)",
