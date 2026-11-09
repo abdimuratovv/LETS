@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(10);
+select plan(13);
 
 -- Tayyorlov (postgres sifatida): ikki guruh, ikki kurs, bitta o'quvchi
 insert into public.groups (id, name) values
@@ -119,6 +119,26 @@ select lives_ok(
         set onboarding_done = true, full_name = 'Ustoz Ustozov'
       where id = current_setting('test.ustoz')::uuid $$,
   'o''qituvchi tug''ilgan kunsiz onboarding_done = true bo''ladi'
+);
+
+-- 11-13. Guruh rangi: hex formati check bilan tekshiriladi
+select throws_ok(
+  $$ insert into public.groups (name, color) values ('Rang 1', 'red') $$,
+  '23514',
+  null,
+  'rang nomi (red) rad etiladi'
+);
+
+select throws_ok(
+  $$ insert into public.groups (name, color) values ('Rang 2', '#12345') $$,
+  '23514',
+  null,
+  'qisqa hex (#12345) rad etiladi'
+);
+
+select lives_ok(
+  $$ insert into public.groups (name, color) values ('Rang 3', '#4F46E5') $$,
+  'to''g''ri hex (#4F46E5) qabul qilinadi'
 );
 
 select * from finish();
