@@ -16,6 +16,8 @@ const FALLBACK_MESSAGE = "Kutilmagan xato. Qaytadan urinib ko'ring"
 const messages: Record<string, string> = {
   invalid_credentials: "Login yoki parol noto'g'ri",
   login_taken: 'Bu login band',
+  group_not_found: 'Guruh topilmadi',
+  not_found: "O'quvchi topilmadi",
   invalid_login: "Login 3–20 belgidan iborat bo'lsin: kichik lotin harflari, raqamlar, nuqta yoki pastki chiziq",
   invalid_password: "Parol 6–72 belgidan iborat bo'lsin",
   invalid_full_name: "Ism-familiyani to'liq kiriting (kamida 2 so'z, 3–60 belgi, faqat harflar, defis va apostrof)",

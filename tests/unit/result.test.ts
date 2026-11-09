@@ -12,6 +12,8 @@ describe('result', () => {
 
   it('errorMessage maps known codes', () => {
     expect(errorMessage('login_taken')).toBe('Bu login band')
+    expect(errorMessage('group_not_found')).toBe('Guruh topilmadi')
+    expect(errorMessage('not_found')).toBe("O'quvchi topilmadi")
   })
 
   it('errorMessage falls back for unknown codes', () => {
