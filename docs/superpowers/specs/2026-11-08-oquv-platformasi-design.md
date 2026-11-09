@@ -86,7 +86,7 @@ Barcha bosqichlar boshidan hisobga olingan; 2–3-versiya jadvallari kerak bo'lg
 
 **Resurslar**
 - `topics` — `course_id`, `title`, `position`.
-- `resources` — `topic_id`, `type` (`link` / `file` / `note`), `title`, `url`, `storage_path`, `body_md`, `position`.
+- `resources` — `topic_id`, `type` (`link` / `file` / `note`), `title`, `url`, `storage_path`, `file_name`, `file_size`, `body_md`, `position`, `created_at`, `updated_at`. Tur bo'yicha faqat tegishli maydonlar to'ldiriladi (check cheklovi bilan).
 - `resource_groups` — resurs cheklangan guruhlar. Bo'sh bo'lsa resurs kursning barcha guruhlariga ochiq.
 - `resource_views` — `student_id`, `resource_id`, `first_viewed_at`.
 
@@ -164,6 +164,10 @@ Sozlanadigan elementlar: `avatar`, `online_status` (online va oxirgi faollik), `
 - Har bir resurs bitta mavzuga tegishli, uch turdan biri: havola, fayl (PDF, PPTX, kod fayli; Supabase Storage, maksimal 50 MB), konspekt (Markdown: sarlavha, ro'yxat, kod bloki, rasm havolasi).
 - Boshlang'ich holatda kursning barcha guruhlariga ochiq; ixtiyoriy ravishda tanlangan guruhlarga cheklanadi.
 - O'quvchi resursni birinchi ochganida `resource_views` ga yoziladi.
+- Fayl yuklash brauzerdan to'g'ridan-to'g'ri Supabase Storage'ga, serverda yaratilgan imzolangan yuklash havolasi orqali amalga oshiriladi (Vercel funksiyalari so'rov hajmini 4.5 MB bilan cheklaydi). Fayl nomi xavfsiz yo'lga (`<topic_id>/<uuid>.<kengaytma>`) o'zgartiriladi, asl nomi `resources.file_name` da saqlanadi. Yuklab olish qisqa muddatli (60 soniya) imzolangan havola orqali, har doim yuklab olish (attachment) rejimida.
+- Ruxsat etilgan fayl kengaytmalari: pdf, ppt, pptx, doc, docx, xls, xlsx, txt, md, csv, json, zip, py, js, ts, jsx, tsx, html, css, java, c, cpp, cs, sql, png, jpg, jpeg, gif, webp. Boshqalari rad etiladi.
+- Havola faqat `http` yoki `https` bo'lishi mumkin. Konspekt Markdown'da xom HTML qo'llab-quvvatlanmaydi.
+- Mavzuni faqat unda resurs bo'lmaganda o'chirish mumkin (testlar ham mavzuga bog'lanadi).
 
 ### 5.5. Savollar va testlar
 
