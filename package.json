@@ -11,6 +11,7 @@
     "test:int": "vitest run --config vitest.integration.config.ts",
     "test:db": "supabase test db",
     "test:e2e": "playwright test",
+    "create-teacher": "tsx --env-file=.env.local scripts/create-teacher.ts",
     "db:types": "supabase gen types typescript --local > src/types/database.ts"
   },
   "dependencies": {

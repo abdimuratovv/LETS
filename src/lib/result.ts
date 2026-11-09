@@ -14,6 +14,7 @@ const FALLBACK_MESSAGE = "Kutilmagan xato. Qaytadan urinib ko'ring"
 
 // Foydalanuvchiga ko'rsatiladigan xato matnlari. Keyingi tasklar o'z kodlarini shu jadvalga qo'shadi.
 const messages: Record<string, string> = {
+  invalid_credentials: "Login yoki parol noto'g'ri",
   login_taken: 'Bu login band',
   invalid_login: "Login 3–20 belgidan iborat bo'lsin: kichik lotin harflari, raqamlar, nuqta yoki pastki chiziq",
   invalid_password: "Parol 6–72 belgidan iborat bo'lsin",
