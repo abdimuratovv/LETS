@@ -46,6 +46,51 @@ begin
     if old.birth_date_locked and new.birth_date is distinct from old.birth_date then
       raise exception 'birth_date_locked';
     end if;
+
+    -- Onboarding ortga qaytarilmaydi (false -> true ruxsat, completeOnboarding)
+    if old.onboarding_done and not new.onboarding_done then
+      raise exception 'protected_column';
+    end if;
+
+    -- ===== Qiymat tekshiruvlari: Task 4 zod sxemalari bilan bir xil, API orqali chetlab otishga qarshi =====
+    -- Tugilgan kun: 1950-01-01 .. bugun (Asia/Tashkent)
+    if new.birth_date is distinct from old.birth_date
+       and (new.birth_date is null
+            or new.birth_date < date '1950-01-01'
+            or new.birth_date > (now() at time zone 'Asia/Tashkent')::date) then
+      raise exception 'invalid_birth_date';
+    end if;
+
+    -- Ism-familiya: normallashtirilgan holda saqlanadi, 3..60 belgi, kamida 2 suz
+    if new.full_name is distinct from old.full_name
+       and (new.full_name is null
+            or new.full_name <> regexp_replace(btrim(new.full_name), '\s+', ' ', 'g')
+            or char_length(new.full_name) not between 3 and 60
+            or array_length(string_to_array(new.full_name, ' '), 1) < 2) then
+      raise exception 'invalid_full_name';
+    end if;
+
+    -- Nickname: null yoki 2..20 belgi, chetida probelsiz
+    if new.nickname is distinct from old.nickname
+       and new.nickname is not null
+       and (new.nickname <> btrim(new.nickname)
+            or char_length(new.nickname) not between 2 and 20) then
+      raise exception 'invalid_nickname';
+    end if;
+
+    -- Avatar: faqat {"base": <whitelist hayvon>}
+    -- (plpgsql IF sharti birinchi THEN da tugaydi, shuning uchun CASE emas, ichma-ich IF)
+    if new.avatar_config is distinct from old.avatar_config then
+      if jsonb_typeof(new.avatar_config) is distinct from 'object' then
+        raise exception 'invalid_avatar';
+      end if;
+      if (select count(*) from jsonb_object_keys(new.avatar_config)) <> 1
+         or jsonb_typeof(new.avatar_config -> 'base') is distinct from 'string'
+         or (new.avatar_config ->> 'base') not in
+            ('wolf', 'fox', 'deer', 'bear', 'cat', 'owl', 'rabbit', 'panda') then
+        raise exception 'invalid_avatar';
+      end if;
+    end if;
   end if;
 
   -- Tug'ilgan kun bir marta kiritiladi: birinchi qiymat qo'yilganda qulflanadi (har qanday chaqiruvchi uchun).
