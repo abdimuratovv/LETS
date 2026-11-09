@@ -183,8 +183,19 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "is_teacher":
+            "active_group_id":
+{ Args: { "uid": string }; Returns: string
+                           },
+"can_view":
+{ Args: { "item": Database["public"]['Enums']["privacy_item"],"target": string,"viewer": string }; Returns: boolean
+                           },
+"is_teacher":
 { Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"list_visible_students":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "avatar_config": Json,"birthday_md": string,"full_name": string,"group_id": string,"id": string,"last_seen_at": string,"nickname": string,"same_group": boolean
+            }[]
                            }
           }
           Enums: {
