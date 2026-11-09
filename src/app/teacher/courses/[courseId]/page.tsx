@@ -40,7 +40,7 @@ export default async function CoursePage({ params }: { params: Promise<{ courseI
   return (
     <main className="mx-auto w-full max-w-3xl space-y-6 bg-gray-50 p-4 text-gray-900 sm:p-6">
       <div>
-        <Link href="/teacher/courses" className="text-sm text-gray-600 underline">
+        <Link href="/teacher/courses" className="inline-flex min-h-12 items-center text-sm text-gray-600 underline">
           ← Kurslar
         </Link>
         <h1 className="mt-1 text-2xl font-semibold">{course.title}</h1>

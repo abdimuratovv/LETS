@@ -14,7 +14,7 @@ export function AppNav({ links }: { links: { href: string; label: string }[] }) 
           <Link
             key={l.href}
             href={l.href}
-            className="flex min-h-11 shrink-0 items-center rounded-lg px-2 text-sm sm:px-3 font-medium text-gray-700 hover:bg-gray-100"
+            className="flex min-h-12 shrink-0 items-center rounded-lg px-2 text-sm sm:px-3 font-medium text-gray-700 hover:bg-gray-100"
           >
             {l.label}
           </Link>
@@ -22,7 +22,7 @@ export function AppNav({ links }: { links: { href: string; label: string }[] }) 
         <form action={signOut} className="ml-auto shrink-0">
           <button
             type="submit"
-            className="min-h-11 rounded-lg px-2 text-sm sm:px-3 font-medium text-gray-700 hover:bg-gray-100"
+            className="min-h-12 rounded-lg px-2 text-sm sm:px-3 font-medium text-gray-700 hover:bg-gray-100"
           >
             Chiqish
           </button>

@@ -157,19 +157,38 @@ async function setGroups(
   resourceId: string,
   groupIds: string[],
 ): Promise<Result<null, ResourceError>> {
-  const { error: delError } = await db.from('resource_groups').delete().eq('resource_id', resourceId)
-  if (delError) {
-    if (isForbidden(delError)) return err('forbidden')
-    fail("guruh cheklovi o'chirilmadi", delError)
+  if (groupIds.length === 0) {
+    // Bo'sh ro'yxat = hammaga ochish: oddiy o'chirish.
+    const { error: delError } = await db.from('resource_groups').delete().eq('resource_id', resourceId)
+    if (delError) {
+      if (isForbidden(delError)) return err('forbidden')
+      fail("guruh cheklovi o'chirilmadi", delError)
+    }
+    return ok(null)
   }
-  if (groupIds.length === 0) return ok(null)
+  if (!groupIds.every(isUuid)) return err('invalid_group')
+
+  // Avval yangilarini qo'shamiz, keyin ortiqchasini o'chiramiz: xatoda eski ∪ yangi
+  // qoladi, hech qachon bo'sh (hammaga ochiq) to'plam emas.
   const { error } = await db
     .from('resource_groups')
-    .insert(groupIds.map((group_id) => ({ resource_id: resourceId, group_id })))
+    .upsert(
+      groupIds.map((group_id) => ({ resource_id: resourceId, group_id })),
+      { onConflict: 'resource_id,group_id', ignoreDuplicates: true },
+    )
   if (error) {
     if (isForbidden(error)) return err('forbidden')
     if (isFkViolation(error)) return err('invalid_group')
     fail('guruh cheklovi yozilmadi', error)
+  }
+  const { error: delError } = await db
+    .from('resource_groups')
+    .delete()
+    .eq('resource_id', resourceId)
+    .not('group_id', 'in', `(${groupIds.join(',')})`)
+  if (delError) {
+    if (isForbidden(delError)) return err('forbidden')
+    fail("guruh cheklovi o'chirilmadi", delError)
   }
   return ok(null)
 }
@@ -199,10 +218,20 @@ async function insertResource(
     fail('resurs yaratilmadi', error)
   }
 
-  const groups = await setGroups(db, data.id, groupIds)
+  // Cheklovsiz resurs hammaga ochilib qolmasin: xato yoki istisnoda yangi resurs o'chiriladi.
+  const compensate = async () => {
+    const { error: delError } = await db.from('resources').delete().eq('id', data.id)
+    if (delError) console.error('resurs qaytarib olinmadi', delError)
+  }
+  let groups: Result<null, ResourceError>
+  try {
+    groups = await setGroups(db, data.id, groupIds)
+  } catch (e) {
+    await compensate()
+    throw e
+  }
   if (!groups.ok) {
-    // Cheklovsiz resurs hammaga ochilib qolmasin.
-    await db.from('resources').delete().eq('id', data.id)
+    await compensate()
     return groups
   }
   return ok({ id: data.id })

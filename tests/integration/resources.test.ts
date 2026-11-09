@@ -346,6 +346,67 @@ describe('resources service (o\'qituvchi)', () => {
       expect(r.groupIds).toEqual([])
     })
 
+    async function storedGroups(resourceId: string): Promise<string[]> {
+      const { data } = await adminClient()
+        .from('resource_groups')
+        .select('group_id')
+        .eq('resource_id', resourceId)
+      return (data ?? []).map((r) => r.group_id)
+    }
+
+    it('guruhlar {A} -> {B}: faqat B qoladi', async () => {
+      const a = await makeGroup('A')
+      const b = await makeGroup('B')
+      const res = await createLinkResource(teacher, {
+        topicId,
+        title: 'Havola',
+        url: 'https://a.uz',
+        groupIds: [a.id],
+      })
+      if (!res.ok) throw new Error(res.error)
+      expect(await updateResource(teacher, res.data.id, { groupIds: [b.id] })).toEqual({
+        ok: true,
+        data: null,
+      })
+      expect(await storedGroups(res.data.id)).toEqual([b.id])
+    })
+
+    it("faqat nom o'zgarsa cheklov saqlanadi", async () => {
+      const a = await makeGroup('A')
+      const res = await createLinkResource(teacher, {
+        topicId,
+        title: 'Havola',
+        url: 'https://a.uz',
+        groupIds: [a.id],
+      })
+      if (!res.ok) throw new Error(res.error)
+      expect(
+        await updateResource(teacher, res.data.id, { title: 'Yangi nom', groupIds: [a.id] }),
+      ).toEqual({ ok: true, data: null })
+      expect(await storedGroups(res.data.id)).toEqual([a.id])
+      expect(await updateResource(teacher, res.data.id, { title: 'Yana nom' })).toEqual({
+        ok: true,
+        data: null,
+      })
+      expect(await storedGroups(res.data.id)).toEqual([a.id])
+    })
+
+    it("guruhlar {A} -> {}: hammaga ochiladi", async () => {
+      const a = await makeGroup('A')
+      const res = await createLinkResource(teacher, {
+        topicId,
+        title: 'Havola',
+        url: 'https://a.uz',
+        groupIds: [a.id],
+      })
+      if (!res.ok) throw new Error(res.error)
+      expect(await updateResource(teacher, res.data.id, { groupIds: [] })).toEqual({
+        ok: true,
+        data: null,
+      })
+      expect(await storedGroups(res.data.id)).toEqual([])
+    })
+
     it("noto'g'ri qiymatlar va mavjud bo'lmagan resurs", async () => {
       const res = await createNoteResource(teacher, { topicId, title: 'Konspekt', bodyMd: 'a' })
       if (!res.ok) throw new Error(res.error)
