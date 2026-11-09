@@ -56,7 +56,9 @@ create table public.courses (
 create table public.groups (
   id uuid primary key default gen_random_uuid(),
   name text not null,
-  description text
+  description text,
+  color text not null default '#4F46E5' check (color ~ '^#[0-9A-Fa-f]{6}$'),
+  emblem_path text
 );
 
 create table public.group_courses (

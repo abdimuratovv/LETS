@@ -91,14 +91,14 @@ isOneToOne: false
                   ]
                 },"groups": {
                   Row: {
-                    "description": string | null,"id": string,"name": string
+                    "color": string,"description": string | null,"emblem_path": string | null,"id": string,"name": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "description"?: string | null,"id"?: string,"name": string
+                    "color"?: string,"description"?: string | null,"emblem_path"?: string | null,"id"?: string,"name": string
                   }
                   Update: {
-                    "description"?: string | null,"id"?: string,"name"?: string
+                    "color"?: string,"description"?: string | null,"emblem_path"?: string | null,"id"?: string,"name"?: string
                   }
                   Relationships: [
                     

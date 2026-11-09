@@ -80,7 +80,7 @@ Barcha bosqichlar boshidan hisobga olingan; 2–3-versiya jadvallari kerak bo'lg
 - `profiles` — `id` (auth.users), `role`, `login`, `full_name`, `nickname`, `birth_date`, `birth_date_locked`, `avatar_config` (jsonb), `status` (`active` / `archived`), `onboarding_done`, `name_edit_locked`, `last_seen_at`.
 - `profile_name_changes` — ism yoki nickname o'zgarishlari tarixi (`field`, `old_value`, `new_value`, `changed_at`).
 - `courses` — `title`, `position`, `status` (`active` / `finished`).
-- `groups` — `name`, `description`.
+- `groups` — `name`, `description`, `color` (hex, tayyor palitradan; boshlang'ich `#4F46E5`), `emblem_path` (ixtiyoriy). Rang va emblemni tahrirlash interfeysi 2-versiyada (5.11, Uyalar kubogi).
 - `group_courses` — guruh qaysi kursni qachon o'tgan: `group_id`, `course_id`, `started_at`, `ended_at`.
 - `group_memberships` — `student_id`, `group_id`, `joined_at`, `left_at`. Bir vaqtda o'quvchining faqat bitta faol a'zoligi bo'ladi.
 
@@ -121,6 +121,8 @@ Barcha bosqichlar boshidan hisobga olingan; 2–3-versiya jadvallari kerak bo'lg
 - `gifts` — `from_student_id`, `to_student_id`, `item_id`, `created_at`.
 - `birthday_reactions` — `birthday_student_id`, `year`, `reactor_id`, `emoji` (har kishidan bitta).
 - `banner_dismissals` — `user_id`, `banner_key`, `dismissed_at`.
+- `house_cups` — `name`, `course_id`, `starts_on`, `ends_on`, `status` (`active` / `finished`), `winner_group_ids` (uuid[]). Bir vaqtda bitta faol kubok.
+- `house_point_transactions` — `cup_id`, `group_id`, `amount` (+/−), `source` (`student` / `teacher`), `student_id` (`source = 'student'` bo'lsa), `reason`, `ref_type`, `ref_id`, `created_by`, `created_at`.
 
 ### 4.3. 3-versiya (eventlar)
 
@@ -239,7 +241,7 @@ Barchasi `attempts`, `attempt_answers`, `resource_views` dan SQL view'lar orqali
 
 Faqat platforma ichida (bildirishnomalar markazi, o'qilmaganlar soni).
 - 1-versiya: yangi vazifa berildi; muddatga 24 soat qoldi (`pg_cron`); natijalar ochildi; jonli test boshlandi.
-- 2-versiya: nishon olindi; sovg'a keldi; guruhdoshning tug'ilgan kuni.
+- 2-versiya: nishon olindi; sovg'a keldi; guruhdoshning tug'ilgan kuni; o'qituvchi guruhga ball berdi yoki ayirdi; kubok g'olibi e'lon qilindi.
 
 ### 5.11. Gamification (2-versiya)
 
@@ -251,6 +253,7 @@ Faqat platforma ichida (bildirishnomalar markazi, o'qilmaganlar soni).
   - `topic_growth` — "zaif mavzuni kuchliga aylantirish";
   - `on_time_streak` — "ketma-ket ___ ta vazifani o'z vaqtida topshirish";
   - `live_first_place` — "jonli testda guruhda 1-o'rin";
+  - `house_cup_winner` — "uyalar kubogida g'olib guruh a'zosi" (kubok yakunlanganda avtomatik);
   - `event_tests` — "event davomida ___ ta test topshirish" (3-versiya).
 - Shartlar urinish topshirilganda serverda tekshiriladi.
 - Qo'lda beriladigan nishonlar: o'qituvchi nom, tavsif va rasm yuklab cheksiz yaratadi va izoh bilan beradi.
@@ -279,6 +282,18 @@ Faqat platforma ichida (bildirishnomalar markazi, o'qilmaganlar soni).
 - Noyob skin to'liq rasm bo'lib, hayvon qatlamini almashtiradi.
 
 **Sovg'alar:** do'kondan sotib olinib, o'quvchiga ko'rinadigan istalgan o'quvchiga yuboriladi; oluvchi profilidagi "sovg'alar vitrinasi"da ko'rinadi; tangaga qaytarilmaydi.
+
+**Uyalar kubogi (House Cup):**
+- **Guruh rangi va emblemi:** o'qituvchi tayyor palitradan rang tanlaydi va ixtiyoriy emblem yuklaydi (shaffof PNG yoki SVG). O'quvchi interfeysining asosiy rangi o'z guruhi rangida; guruh nomi yonida emblem.
+- **Kubok davri:** o'qituvchi kubok yaratadi (nom, masalan "1-chorak kubogi", boshlanish va tugash sanasi). Bir vaqtda bitta faol kubok, joriy kursga bog'langan.
+- **Ball manbalari:**
+  - O'quvchi o'quv faoliyatidan tanga olganda (test topshirish, to'g'ri javoblar, nishon, jonli testda qatnashish) xuddi shuncha ball uning faol guruhiga yoziladi (`source = 'student'`); uyga vazifa kunlik cheki shu yerda ham amal qiladi.
+  - Kubokka kirmaydi: tug'ilgan kun tangasi, sovg'alar, o'qituvchi qo'lda bergan tangalar, `house_cup_winner` nishonidan kelgan tanga.
+  - O'qituvchi guruhga izoh bilan ball qo'shadi yoki ayiradi (`source = 'teacher'`), masalan "+10 Gryffindor: darsdagi faollik".
+  - Tanga sarflanganda kubok balli kamaymaydi. O'quvchi boshqa guruhga ko'chsa, avval olgan ballari eski guruhida qoladi.
+- **Hisob** (guruhlar soni teng bo'lmagani uchun): kubok balli = round(`student` ballari yig'indisi ÷ guruhdagi faol o'quvchilar soni) + `teacher` ballari yig'indisi.
+- **Jadval** hammaga ko'rinadi, chunki bu guruh darajasidagi ma'lumot: bosh sahifada guruhlar rangi, emblemi va kubok balli bilan; ostida o'qituvchi bergan ballar lentasi (sabab bilan).
+- **Yakunlash:** `ends_on` o'tganda (`pg_cron`) yoki o'qituvchi qo'lda yakunlaganda eng yuqori ballli guruh(lar) g'olib bo'ladi (durangda hammasi). G'olib guruhning faol a'zolari `house_cup_winner` nishonini oladi; bosh sahifada tantanali e'lon va bildirishnoma.
 
 **Tug'ilgan kun:** o'sha kuni boshqalarning bosh sahifasida banner (`birthday` maxfiylik sozlamasiga ko'ra), har kim o'zi yopguncha ko'rinadi; egasining avatarida bezak; har kishi tayyor to'plamdan bitta reaksiya qoldiradi (🎉 🎂 🥳 🎁 ❤️ 👏); sovg'a yuborish mumkin. Erkin matnli xabar yo'q.
 
@@ -338,7 +353,7 @@ Uyda AI yoki ikkinchi qurilmadan foydalanishni to'liq to'xtatib bo'lmaydi. Maqsa
 
 ## 7. Test qilish strategiyasi
 
-- **Unit testlar:** baholash (har bir savol turi, bir nechta to'g'ri javob), `deadline_at` hisobi, ko'rsatkich chegaralari (80/50), tanga qoidalari (qayta urinish faqat o'sish uchun, kunlik chek), nishon shablonlari, savollar havzasidan tanlash, chiqishlarni hisoblash (minimal davomiylik, N-chiqishda topshirish), tez javob va natijalar farqi signallari.
+- **Unit testlar:** baholash (har bir savol turi, bir nechta to'g'ri javob), `deadline_at` hisobi, ko'rsatkich chegaralari (80/50), tanga qoidalari (qayta urinish faqat o'sish uchun, kunlik chek), nishon shablonlari, savollar havzasidan tanlash, chiqishlarni hisoblash (minimal davomiylik, N-chiqishda topshirish), tez javob va natijalar farqi signallari, uyalar kubogi hisobi (o'rtachalash, kubokka kirmaydigan tangalar, durang).
 - **Ma'lumotlar bazasi testlari:** Supabase lokal muhitida RLS va `can_view` uchun har bir maxfiylik kombinatsiyasi (`everyone` / `own_group` / `nobody`, guruh istisnosi, arxivlangan o'quvchi) va "o'quvchi `question_answer_keys` ni o'qiy olmaydi" tekshiruvi.
 - **E2E (Playwright):** o'qituvchi akkaunt yaratadi → o'quvchi onboarding; uyga vazifa to'liq oqimi (javobni o'zgartirish, ko'rib chiqish, topshirish, muddat o'tishi); bir nechta o'quvchi brauzeri bilan jonli sessiya (holatlar paneli, savolni yopish, natija); qat'iy rejim (tabdan chiqish → ogohlantirish → N-chiqishda avtomatik topshirish); telefon o'lchamidagi ekranda asosiy oqimlar.
 
@@ -356,7 +371,7 @@ Har bir bosqich alohida amalga oshirish rejasi bilan quriladi va ishlaydigan hol
 5. **Ko'rsatkichlar va bildirishnomalar:** "Darsdagi testlar" va "Mashqlar" bo'linishi, aldash signallari.
 
 **2-versiya — gamification**
-6. Nishonlar (konstruktor bilan), tangalar, do'kon, qatlamli avatarlar, sovg'alar, tug'ilgan kun, reyting.
+6. Nishonlar (konstruktor bilan), tangalar, do'kon, qatlamli avatarlar, sovg'alar, tug'ilgan kun, reyting, uyalar kubogi (guruh rangi va emblemi bilan).
 
 **3-versiya — eventlar**
 7. Event tizimi, sayt effektlari, event mahsulotlari va nishonlari.
