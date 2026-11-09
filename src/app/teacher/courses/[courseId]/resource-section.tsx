@@ -71,8 +71,8 @@ export function TopicResources({
 
 function AddBlock({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <details className="rounded-xl border border-gray-200">
-      <summary className="flex min-h-12 cursor-pointer items-center px-3 text-base font-medium">
+    <details className="group rounded-xl border border-gray-200">
+      <summary className="flex min-h-12 cursor-pointer items-center gap-2 before:content-['▸'] group-open:before:content-['▾'] px-3 text-base font-medium">
         {title}
       </summary>
       <div className="border-t border-gray-100 p-3">{children}</div>
@@ -147,8 +147,8 @@ function ResourceItem({
       </div>
 
       {r.type === 'note' && r.bodyMd && (
-        <details className="mt-2">
-          <summary className="flex min-h-12 cursor-pointer items-center text-sm font-medium">
+        <details className="group mt-2">
+          <summary className="flex min-h-12 cursor-pointer items-center gap-2 before:content-['▸'] group-open:before:content-['▾'] text-sm font-medium">
             Konspekt matni
           </summary>
           <div className="rounded-lg bg-gray-50 p-3">
@@ -158,8 +158,8 @@ function ResourceItem({
       )}
 
       {stats.total > 0 && (
-        <details className="mt-1">
-          <summary className="flex min-h-12 cursor-pointer items-center text-sm font-medium">
+        <details className="group mt-1">
+          <summary className="flex min-h-12 cursor-pointer items-center gap-2 before:content-['▸'] group-open:before:content-['▾'] text-sm font-medium">
             Ko&apos;rmaganlar ({stats.notViewed.length})
           </summary>
           {stats.notViewed.length === 0 ? (

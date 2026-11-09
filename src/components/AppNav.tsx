@@ -7,14 +7,14 @@ export function AppNav({ links }: { links: { href: string; label: string }[] }) 
     <header className="border-b border-gray-200 bg-white">
       <nav
         aria-label="Asosiy menyu"
-        className="mx-auto flex w-full max-w-3xl flex-wrap items-center gap-1 px-2 py-2 sm:px-4"
+        className="mx-auto flex w-full max-w-3xl flex-wrap items-center gap-0 px-1 py-2 sm:gap-1 sm:px-4"
       >
-        <span className="mr-2 shrink-0 px-2 text-base font-semibold">LETS</span>
+        <span className="mr-1 shrink-0 px-2 text-base sm:mr-2 font-semibold">LETS</span>
         {links.map((l) => (
           <Link
             key={l.href}
             href={l.href}
-            className="flex min-h-11 shrink-0 items-center rounded-lg px-3 text-sm font-medium text-gray-700 hover:bg-gray-100"
+            className="flex min-h-11 shrink-0 items-center rounded-lg px-2 text-sm sm:px-3 font-medium text-gray-700 hover:bg-gray-100"
           >
             {l.label}
           </Link>
@@ -22,7 +22,7 @@ export function AppNav({ links }: { links: { href: string; label: string }[] }) 
         <form action={signOut} className="ml-auto shrink-0">
           <button
             type="submit"
-            className="min-h-11 rounded-lg px-3 text-sm font-medium text-gray-700 hover:bg-gray-100"
+            className="min-h-11 rounded-lg px-2 text-sm sm:px-3 font-medium text-gray-700 hover:bg-gray-100"
           >
             Chiqish
           </button>
