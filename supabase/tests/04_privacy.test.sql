@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(36);
+select plan(44);
 
 -- ===== Tayyorlov (postgres sifatida) =====
 -- Guruh A (a1, a2, arxivdagi a3), guruh B (b1), o'qituvchi t
@@ -19,13 +19,19 @@ select set_config('test.a3',
 select set_config('test.b1',
   tests.create_user('b1_user', 'student', '00000000-0000-0000-0000-00000000000b')::text, true);
 
-update public.profiles set full_name = 'Arxiv Talaba', status = 'archived'
+-- Barcha fixture o'quvchilari onboardingni tugatgan (list_visible_students faqat ularni qaytaradi);
+-- tugatmagan a4 oxirida alohida tekshiriladi.
+update public.profiles
+   set full_name = 'Arxiv Talaba', birth_date = '2012-01-05', onboarding_done = true, status = 'archived'
  where id = current_setting('test.a3')::uuid;
 update public.profiles
-   set full_name = 'Ali Valiyev', birth_date = '2012-03-15', last_seen_at = now()
+   set full_name = 'Anvar Toshev', birth_date = '2012-01-10', onboarding_done = true
+ where id = current_setting('test.a1')::uuid;
+update public.profiles
+   set full_name = 'Ali Valiyev', birth_date = '2012-03-15', last_seen_at = now(), onboarding_done = true
  where id = current_setting('test.a2')::uuid;
 update public.profiles
-   set full_name = 'Bobur Karimov', birth_date = '2011-07-20', last_seen_at = now()
+   set full_name = 'Bobur Karimov', birth_date = '2011-07-20', last_seen_at = now(), onboarding_done = true
  where id = current_setting('test.b1')::uuid;
 -- a2 ning ism tarixi (b1 uchun ham) — a1 ko'rmasligi kerak
 update public.profiles set nickname = 'ali' where id = current_setting('test.a2')::uuid;
@@ -38,8 +44,8 @@ select ok(
 );
 select ok(
   not has_function_privilege('anon', 'public.active_group_id(uuid)', 'execute')
-  and has_function_privilege('authenticated', 'public.active_group_id(uuid)', 'execute'),
-  'active_group_id: anon emas, authenticated chaqira oladi'
+  and not has_function_privilege('authenticated', 'public.active_group_id(uuid)', 'execute'),
+  'active_group_id: API rollari (anon, authenticated) chaqira olmaydi'
 );
 select ok(
   not has_function_privilege('anon', 'public.list_visible_students()', 'execute')
@@ -96,6 +102,20 @@ select is(
   'b1 guruhi qaytariladi'
 );
 
+-- ===== 12a-12c. a1 sifatida can_view / active_group_id to'g'ridan-to'g'ri =====
+select is(
+  public.can_view(current_setting('test.a2')::uuid, current_setting('test.b1')::uuid, 'badges'),
+  false, 'o''quvchi boshqa o''quvchi nomidan (viewer <> auth.uid()) can_view so''ray olmaydi'
+);
+select is(
+  public.can_view(current_setting('test.a1')::uuid, current_setting('test.b1')::uuid, 'badges'),
+  true, 'o''quvchi o''z nomidan can_view so''ray oladi'
+);
+select throws_ok(
+  $$ select public.active_group_id(current_setting('test.b1')::uuid) $$,
+  '42501', null, 'o''quvchi active_group_id ni chaqira olmaydi'
+);
+
 -- ===== 13-20. RLS (a1 sifatida) =====
 select is_empty(
   $$ select * from public.profiles where id = current_setting('test.a2')::uuid $$,
@@ -107,7 +127,8 @@ select results_eq(
   'o''quvchi faqat o''z a''zoligini ko''radi'
 );
 select is_empty(
-  $$ select * from public.profile_name_changes $$,
+  $$ select * from public.profile_name_changes
+      where profile_id <> current_setting('test.a1')::uuid $$,
   'o''quvchi boshqalarning ism tarixini ko''rmaydi'
 );
 select is(
@@ -166,8 +187,16 @@ select lives_ok(
   'o''qituvchi guruh yarata oladi'
 );
 select is(
-  (select count(*)::int from public.profile_name_changes), 4,
+  (select count(*)::int from public.profile_name_changes), 5,
   'o''qituvchi ism tarixini ko''radi'
+);
+select is(
+  public.can_view(current_setting('test.a2')::uuid, current_setting('test.b1')::uuid, 'badges'),
+  true, 'o''qituvchi boshqa viewer uchun can_view ni hisoblay oladi (badges everyone)'
+);
+select is(
+  public.can_view(current_setting('test.a2')::uuid, current_setting('test.b1')::uuid, 'avatar'),
+  false, 'o''qituvchi chaqirganda ham qoida odatdagidek: a2 b1 avatarini ko''rmaydi'
 );
 
 -- ===== 27-29. avatar -> nobody =====
@@ -234,6 +263,33 @@ update public.group_memberships set left_at = now()
 select is(
   public.can_view(current_setting('test.a1')::uuid, current_setting('test.b1')::uuid, 'birthday'),
   false, 'ikkalasi guruhsiz: own_group ochilmaydi (null = null emas)'
+);
+
+-- ===== 37-39. Onboardingni tugatmagan o'quvchi ro'yxatlarda chiqmaydi =====
+-- Hozir: hammasi own_group, A guruhida faqat a2 (a1 va b1 guruhsiz).
+select set_config('test.a4',
+  tests.create_user('a4_user', 'student', '00000000-0000-0000-0000-00000000000a')::text, true);
+select tests.authenticate_as(current_setting('test.a2')::uuid);
+select is_empty(
+  $$ select id from public.list_visible_students() $$,
+  'onboardingni tugatmagan guruhdosh (ismsiz) a2 ro''yxatida yo''q'
+);
+select tests.clear_auth();
+select tests.authenticate_as(current_setting('test.t')::uuid);
+select ok(
+  not exists (select 1 from public.list_visible_students()
+               where id = current_setting('test.a4')::uuid),
+  'onboardingni tugatmagan o''quvchi o''qituvchi chaqirganda ham qaytmaydi'
+);
+select tests.clear_auth();
+update public.profiles
+   set full_name = 'Dilshod Rahimov', birth_date = '2012-09-01', onboarding_done = true
+ where id = current_setting('test.a4')::uuid;
+select tests.authenticate_as(current_setting('test.a2')::uuid);
+select results_eq(
+  $$ select id, full_name from public.list_visible_students() $$,
+  $$ values (current_setting('test.a4')::uuid, 'Dilshod Rahimov'::text) $$,
+  'onboarding tugagach guruhdosh ro''yxatda ismi bilan chiqadi'
 );
 
 select * from finish();

@@ -182,6 +182,7 @@ export async function listVisibleStudents(db: Db): Promise<VisibleStudent[]> {
   if (error) fail("o'quvchilar ro'yxati o'qilmadi", error)
   return ((data ?? []) as unknown as VisibleRow[]).map((r) => ({
     id: r.id,
+    // RPC faqat onboardingni tugatganlarni qaytaradi (CHECK: full_name majburiy); `??` faqat tur uchun.
     fullName: r.full_name ?? '',
     nickname: r.nickname || null,
     groupId: r.group_id ?? '',

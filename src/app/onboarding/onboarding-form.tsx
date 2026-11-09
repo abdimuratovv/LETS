@@ -23,7 +23,7 @@ function FieldError({ message, id }: { message?: string; id: string }) {
   )
 }
 
-export function OnboardingForm() {
+export function OnboardingForm({ lockedBirthDate = null }: { lockedBirthDate?: string | null }) {
   const [state, action, pending] = useActionState(completeOnboarding, initial)
   const [avatar, setAvatar] = useState('')
   const selected = avatar || state.values.avatarBase
@@ -48,18 +48,33 @@ export function OnboardingForm() {
 
       <label className="block text-sm font-medium">
         Tug&apos;ilgan kun
-        <input
-          name="birthDate"
-          type="date"
-          required
-          defaultValue={state.values.birthDate}
-          aria-invalid={!!e.birthDate}
-          aria-describedby="birthDate-error"
-          className={inputClass}
-        />
+        {lockedBirthDate ? (
+          <>
+            {/* disabled maydon yuborilmaydi - saqlangan sana yashirin maydon orqali ketadi */}
+            <input
+              type="date"
+              disabled
+              value={lockedBirthDate}
+              className={`${inputClass} disabled:bg-gray-100 disabled:text-gray-700`}
+            />
+            <input type="hidden" name="birthDate" value={lockedBirthDate} />
+          </>
+        ) : (
+          <input
+            name="birthDate"
+            type="date"
+            required
+            defaultValue={state.values.birthDate}
+            aria-invalid={!!e.birthDate}
+            aria-describedby="birthDate-error"
+            className={inputClass}
+          />
+        )}
         <FieldError id="birthDate-error" message={e.birthDate} />
         <span className="mt-1 block text-xs font-normal text-gray-600">
-          Keyin faqat o&apos;qituvchi o&apos;zgartira oladi
+          {lockedBirthDate
+            ? "O'qituvchi kiritgan; faqat o'qituvchi o'zgartira oladi"
+            : "Keyin faqat o'qituvchi o'zgartira oladi"}
         </span>
       </label>
 

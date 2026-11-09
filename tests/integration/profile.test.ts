@@ -166,6 +166,26 @@ describe('profile service', () => {
         error: 'not_found',
       })
     })
+
+    it("o'qituvchi onboardingdan oldin kiritgan sana bilan onboarding o'tadi; boshqa sana birth_date_locked", async () => {
+      expect(await setBirthDate(teacher, studentId, '2011-02-03')).toEqual({ ok: true, data: null })
+      const locked = await profile()
+      expect(locked.onboarding_done).toBe(false)
+      expect(locked.birth_date_locked).toBe(true)
+
+      // O'quvchi API orqali boshqa sana yuborsa - rad etiladi, profil o'zgarmaydi
+      const other = await completeOnboarding(student, studentId, valid)
+      expect(other).toEqual({ ok: false, error: 'birth_date_locked' })
+      expect((await profile()).onboarding_done).toBe(false)
+
+      // Forma saqlangan sanani yuboradi - onboarding muvaffaqiyatli
+      const res = await completeOnboarding(student, studentId, { ...valid, birthDate: '2011-02-03' })
+      expect(res).toEqual({ ok: true, data: null })
+      const p = await profile()
+      expect(p.onboarding_done).toBe(true)
+      expect(p.birth_date).toBe('2011-02-03')
+      expect(p.full_name).toBe("O'g'iloy Ne'matova")
+    })
   })
 
   describe('1-ttuzatish', () => {

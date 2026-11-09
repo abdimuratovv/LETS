@@ -59,8 +59,11 @@ export async function completeOnboarding(
   _prev: ProfileFormState,
   formData: FormData,
 ): Promise<ProfileFormState> {
-  const { supabase, userId } = await requireUser()
+  const { supabase, userId, profile } = await requireUser()
   const values = readValues(formData)
+  // Qulflangan (o'qituvchi oldindan kiritgan) sana: formadagi qiymat o'rniga saqlangani yuboriladi,
+  // aks holda DB `birth_date_locked` bilan rad etadi.
+  if (profile.birth_date_locked && profile.birth_date) values.birthDate = profile.birth_date
   try {
     const res = await service.completeOnboarding(supabase, userId, {
       fullName: values.fullName,

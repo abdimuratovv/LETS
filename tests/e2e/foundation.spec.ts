@@ -69,9 +69,12 @@ test("asos: o'qituvchi, onboarding, Guruhim, API hiylasi va arxiv", async ({ bro
 
   await nav(teacher, 'Guruhlar').click()
   await expect(teacher).toHaveURL(/\/teacher\/groups$/)
-  await teacher.getByLabel('Guruh nomi').fill('7-A')
-  await teacher.getByRole('button', { name: "Guruh qo'shish" }).click()
-  await expect(teacher.getByRole('status')).toHaveText("Guruh qo'shildi")
+  for (const name of ['7-A', '7-B']) {
+    await teacher.getByLabel('Guruh nomi').fill(name)
+    await teacher.getByRole('button', { name: "Guruh qo'shish" }).click()
+    await expect(teacher.getByRole('status')).toHaveText("Guruh qo'shildi")
+    await expect(teacher.getByText(name, { exact: true }).first()).toBeVisible()
+  }
 
   await nav(teacher, "O'quvchilar").click()
   await expect(teacher).toHaveURL(/\/teacher\/students$/)
@@ -173,6 +176,20 @@ test("asos: o'qituvchi, onboarding, Guruhim, API hiylasi va arxiv", async ({ bro
   await nav(teacher, "O'quvchilar").click()
   await teacher.getByRole('link', { name: /Ali Karimov/ }).click()
   await expect(teacher).toHaveURL(/\/teacher\/students\/[0-9a-f-]+$/)
+
+  // --- O'qituvchi o'quvchini boshqa guruhga ko'chiradi (spec 5.1) ---
+  await teacher.getByLabel('Yangi guruh').selectOption({ label: '7-B' })
+  await teacher.getByRole('button', { name: "Ko'chirish" }).click()
+  await expect(teacher.getByRole('status').filter({ hasText: "O'quvchi ko'chirildi" })).toBeVisible()
+  await expect(teacher.getByText('Hozirgi guruh: 7-B')).toBeVisible()
+  const { data: moved } = await adminClient()
+    .from('group_memberships')
+    .select('groups(name)')
+    .eq('student_id', studentId)
+    .is('left_at', null)
+    .single()
+  expect(moved?.groups?.name).toBe('7-B')
+
   await teacher.getByRole('button', { name: 'Arxivlash' }).click()
   await teacher.getByRole('button', { name: 'Ha, arxivlash' }).click()
   await expect(teacher.getByRole('button', { name: 'Arxivdan tiklash' })).toBeVisible()

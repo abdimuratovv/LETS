@@ -7,6 +7,7 @@ import {
 } from '@/modules/auth-accounts/service'
 import {
   adminClient,
+  anonClient,
   authUserExists,
   makeGroup,
   makeTeacher,
@@ -34,6 +35,16 @@ describe('auth-accounts service', () => {
     if (!res.ok) throw new Error(`createStudent: ${res.error}`)
     return res.data.id
   }
+
+  describe("ochiq ro'yxatdan o'tish", () => {
+    it("anon klient signUp qila olmaydi (enable_signup = false); auth foydalanuvchi yaratilmaydi", async () => {
+      const email = 'hiyla@students.platforma.local'
+      const { data, error } = await anonClient().auth.signUp({ email, password: 'parol12345' })
+      expect(error).not.toBeNull()
+      expect(data.user).toBeNull()
+      expect(await authUserExists(email)).toBe(false)
+    })
+  })
 
   describe('createStudent', () => {
     it('normallashtirilgan login bilan o\'quvchi, faol a\'zolik yaratadi; har qanday registrda kira oladi', async () => {

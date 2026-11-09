@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { z } from 'zod'
 import { requireTeacher } from '@/lib/auth/guards'
 import { listNameChanges } from '@/modules/profile/service'
-import { ArchiveControl, ResetPasswordForm } from './student-actions'
+import { ArchiveControl, MoveStudentForm, ResetPasswordForm } from './student-actions'
 import { BirthDateForm, NameLockToggle, RevertButton } from './profile-controls'
 
 export default async function StudentPage({ params }: PageProps<'/teacher/students/[id]'>) {
@@ -25,9 +25,8 @@ export default async function StudentPage({ params }: PageProps<'/teacher/studen
     .eq('student_id', id)
     .is('left_at', null)
     .maybeSingle()
-  const { data: group } = membership
-    ? await supabase.from('groups').select('name').eq('id', membership.group_id).maybeSingle()
-    : { data: null }
+  const { data: groups } = await supabase.from('groups').select('id, name').order('name')
+  const group = membership ? (groups ?? []).find((g) => g.id === membership.group_id) : undefined
 
   const changes = await listNameChanges(supabase, id)
   const archived = student.status === 'archived'
@@ -85,6 +84,20 @@ export default async function StudentPage({ params }: PageProps<'/teacher/studen
         <h2 className="mb-4 text-lg font-medium">Tug&apos;ilgan kunni o&apos;zgartirish</h2>
         <BirthDateForm key={student.birth_date ?? ''} studentId={student.id} birthDate={student.birth_date} />
       </section>
+
+      {!archived && (
+        <section className="rounded-2xl bg-white p-4 shadow-sm sm:p-6">
+          <h2 className="mb-1 text-lg font-medium">Boshqa guruhga ko&apos;chirish</h2>
+          <p className="mb-4 text-sm text-gray-600">
+            Hozirgi guruh: <strong>{group?.name ?? 'Guruhsiz'}</strong>
+          </p>
+          <MoveStudentForm
+            studentId={student.id}
+            currentGroupId={membership?.group_id ?? null}
+            groups={groups ?? []}
+          />
+        </section>
+      )}
 
       <section className="rounded-2xl bg-white p-4 shadow-sm sm:p-6">
         <h2 className="mb-4 text-lg font-medium">Parolni tiklash</h2>

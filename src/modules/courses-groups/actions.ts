@@ -94,9 +94,10 @@ export async function moveStudent(
   formData: FormData,
 ): Promise<GroupFormState> {
   const { supabase } = await requireTeacher()
+  const studentId = field(formData, 'studentId')
   return run(
-    () => service.moveStudent(supabase, field(formData, 'studentId'), field(formData, 'groupId')),
+    () => service.moveStudent(supabase, studentId, field(formData, 'groupId')),
     "O'quvchi ko'chirildi",
-    [GROUPS_PATH, '/teacher/students'],
+    [GROUPS_PATH, '/teacher/students', `/teacher/students/${studentId}`],
   )
 }

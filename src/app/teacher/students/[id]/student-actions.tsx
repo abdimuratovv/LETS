@@ -7,6 +7,7 @@ import {
   restoreStudent,
   type AccountFormState,
 } from '@/modules/auth-accounts/actions'
+import { moveStudent } from '@/modules/courses-groups/actions'
 
 const initial: AccountFormState = { error: null, success: null }
 
@@ -121,5 +122,52 @@ export function ArchiveControl({
       )}
       <Feedback state={state} />
     </div>
+  )
+}
+
+export function MoveStudentForm({
+  studentId,
+  currentGroupId,
+  groups,
+}: {
+  studentId: string
+  currentGroupId: string | null
+  groups: { id: string; name: string }[]
+}) {
+  const [state, action, pending] = useActionState(moveStudent, initial)
+
+  return (
+    <form action={action} className="space-y-3">
+      <input type="hidden" name="studentId" value={studentId} />
+      <label className="block text-sm font-medium">
+        Yangi guruh
+        <select
+          name="groupId"
+          required
+          defaultValue={currentGroupId ?? ''}
+          className="mt-1 block min-h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-base"
+        >
+          {currentGroupId === null && (
+            <option value="" disabled>
+              Guruhni tanlang
+            </option>
+          )}
+          {groups.map((g) => (
+            <option key={g.id} value={g.id}>
+              {g.name}
+              {g.id === currentGroupId ? ' (hozirgi)' : ''}
+            </option>
+          ))}
+        </select>
+      </label>
+      <Feedback state={state} />
+      <button
+        type="submit"
+        disabled={pending}
+        className={`${buttonBase} w-full bg-black text-white sm:w-auto`}
+      >
+        Ko&apos;chirish
+      </button>
+    </form>
   )
 }

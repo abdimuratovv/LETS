@@ -38,6 +38,15 @@ begin
     return false;
   end if;
 
+  -- Tizimga kirgan chaqiruvchi faqat o'zi nomidan so'raydi (o'qituvchi bundan mustasno):
+  -- boshqa o'quvchi nomidan "ko'radimi?" deb tekshirib, uning guruhini aniqlab bo'lmaydi.
+  -- auth.uid() null (postgres/service, ichki chaqiruvlar) bo'lsa cheklov yo'q.
+  if (select auth.uid()) is not null
+     and can_view.viewer is distinct from (select auth.uid())
+     and not public.is_teacher() then
+    return false;
+  end if;
+
   if exists (
     select 1
       from public.profiles p
@@ -87,7 +96,8 @@ end;
 $$;
 
 -- ===== list_visible_students() =====
--- Chaqiruvchi faqat auth.uid() (parametr yo'q). Faqat faol o'quvchilar, chaqiruvchining o'zi chiqmaydi.
+-- Chaqiruvchi faqat auth.uid() (parametr yo'q). Faqat faol va onboardingni tugatgan o'quvchilar
+-- (ismsiz qatorlar chiqmasligi uchun; o'qituvchi chaqirganda ham), chaqiruvchining o'zi chiqmaydi.
 -- Qator: chaqiruvchi o'qituvchi, yoki bir guruhda, yoki beshta elementdan kamida biri ko'rinadi.
 -- Ruxsatsiz ustunlar null. Arxivdagi (yoki profilsiz) chaqiruvchi hech narsa olmaydi.
 create or replace function public.list_visible_students()
@@ -129,6 +139,7 @@ as $$
      cross join me
      where p.role = 'student'
        and p.status = 'active'
+       and p.onboarding_done
        and p.id <> me.uid
   ),
   visibility as (
@@ -160,11 +171,11 @@ as $$
    order by v.s_full_name nulls last, v.sid;
 $$;
 
--- Faqat tizimga kirgan foydalanuvchi chaqira oladi.
-revoke execute on function public.active_group_id(uuid) from public, anon;
+-- Faqat tizimga kirgan foydalanuvchi chaqira oladi. active_group_id API orqali umuman chaqirilmaydi:
+-- u faqat security definer funksiyalar (can_view, list_visible_students) ichida egasi huquqi bilan ishlaydi.
+revoke execute on function public.active_group_id(uuid) from public, anon, authenticated;
 revoke execute on function public.can_view(uuid, uuid, public.privacy_item) from public, anon;
 revoke execute on function public.list_visible_students() from public, anon;
-grant execute on function public.active_group_id(uuid) to authenticated;
 grant execute on function public.can_view(uuid, uuid, public.privacy_item) to authenticated;
 grant execute on function public.list_visible_students() to authenticated;
 
