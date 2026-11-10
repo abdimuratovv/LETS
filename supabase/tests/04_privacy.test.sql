@@ -39,8 +39,8 @@ update public.profiles set nickname = 'ali' where id = current_setting('test.a2'
 -- ===== 1-3. Funksiyalar faqat authenticated uchun =====
 select ok(
   not has_function_privilege('anon', 'public.can_view(uuid, uuid, public.privacy_item)', 'execute')
-  and has_function_privilege('authenticated', 'public.can_view(uuid, uuid, public.privacy_item)', 'execute'),
-  'can_view: anon emas, authenticated chaqira oladi'
+  and not has_function_privilege('authenticated', 'public.can_view(uuid, uuid, public.privacy_item)', 'execute'),
+  'can_view: ichki funksiya, anon ham authenticated ham chaqira olmaydi'
 );
 select ok(
   not has_function_privilege('anon', 'public.active_group_id(uuid)', 'execute')
@@ -103,13 +103,13 @@ select is(
 );
 
 -- ===== 12a-12c. a1 sifatida can_view / active_group_id to'g'ridan-to'g'ri =====
-select is(
-  public.can_view(current_setting('test.a2')::uuid, current_setting('test.b1')::uuid, 'badges'),
-  false, 'o''quvchi boshqa o''quvchi nomidan (viewer <> auth.uid()) can_view so''ray olmaydi'
+select throws_ok(
+  $$ select public.can_view(current_setting('test.a2')::uuid, current_setting('test.b1')::uuid, 'badges') $$,
+  '42501', null, 'o''quvchi boshqa o''quvchi nomidan can_view ni chaqira olmaydi'
 );
-select is(
-  public.can_view(current_setting('test.a1')::uuid, current_setting('test.b1')::uuid, 'badges'),
-  true, 'o''quvchi o''z nomidan can_view so''ray oladi'
+select throws_ok(
+  $$ select public.can_view(current_setting('test.a1')::uuid, current_setting('test.b1')::uuid, 'badges') $$,
+  '42501', null, 'o''quvchi o''z nomidan ham can_view ni to''g''ridan-to''g''ri chaqira olmaydi'
 );
 select throws_ok(
   $$ select public.active_group_id(current_setting('test.b1')::uuid) $$,
@@ -190,13 +190,15 @@ select is(
   (select count(*)::int from public.profile_name_changes), 5,
   'o''qituvchi ism tarixini ko''radi'
 );
+select throws_ok(
+  $$ select public.can_view(current_setting('test.a2')::uuid, current_setting('test.b1')::uuid, 'badges') $$,
+  '42501', null, 'o''qituvchi ham can_view ni to''g''ridan-to''g''ri chaqira olmaydi (faqat list_visible_students orqali)'
+);
+-- can_view qoidasi (ichki funksiya) postgres sifatida tekshiriladi
+select tests.clear_auth();
 select is(
   public.can_view(current_setting('test.a2')::uuid, current_setting('test.b1')::uuid, 'badges'),
-  true, 'o''qituvchi boshqa viewer uchun can_view ni hisoblay oladi (badges everyone)'
-);
-select is(
-  public.can_view(current_setting('test.a2')::uuid, current_setting('test.b1')::uuid, 'avatar'),
-  false, 'o''qituvchi chaqirganda ham qoida odatdagidek: a2 b1 avatarini ko''rmaydi'
+  true, 'can_view: a2 b1 badges ni ko''radi (badges everyone)'
 );
 
 -- ===== 27-29. avatar -> nobody =====
@@ -253,6 +255,7 @@ select is_empty(
 );
 
 -- ===== 35-36. Chaqiruvchi guruhi null bo'lsa own_group ochilmaydi =====
+select tests.clear_auth();  -- can_view endi authenticated uchun yopiq: postgres sifatida
 select is(
   public.can_view(current_setting('test.b1')::uuid, current_setting('test.b1')::uuid, 'avatar'),
   true, 'guruhsiz o''quvchi o''zini ko''radi'
